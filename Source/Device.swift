@@ -13,12 +13,15 @@ public class Device {
         var systemInfo = utsname()
         uname(&systemInfo)
         
-        let versionCode: String = String(UTF8String: NSString(bytes: &systemInfo.machine, length: Int(_SYS_NAMELEN), encoding: NSASCIIStringEncoding)!.UTF8String)!
-        
-        return versionCode
+        let machineMirror = Mirror(reflecting: systemInfo.machine)
+        _ = machineMirror.children.reduce("") { identifier, element in
+            guard let value = element.value as? Int8 where value != 0 else { return identifier }
+            return identifier + String(UnicodeScalar(UInt8(value)))
+        }
+        return ""
     }
     
-    static private func getVersion(code code: String) -> Version {
+    static private func getVersion(code: String) -> Version {
         switch code {
             /*** iPhone ***/
             case "iPhone3,1", "iPhone3,2", "iPhone3,3":      return Version.iPhone4
@@ -60,7 +63,7 @@ public class Device {
         }
     }
     
-    static private func getType(code code: String) -> Type {
+    static private func getType(code: String) -> Type {
         let versionCode = Device.getVersionCode()
         
         switch versionCode {
@@ -107,8 +110,8 @@ public class Device {
     }
     
     static public func size() -> Size {
-        let w: Double = Double(CGRectGetWidth(UIScreen.mainScreen().bounds))
-        let h: Double = Double(CGRectGetHeight(UIScreen.mainScreen().bounds))
+        let w: Double = Double(UIScreen.main().bounds.width)
+        let h: Double = Double(UIScreen.main().bounds.height)
         let screenHeight: Double = max(w, h)
         
         switch screenHeight {
@@ -117,7 +120,7 @@ public class Device {
             case 568:
                 return Size.Screen4Inch
             case 667:
-                return UIScreen.mainScreen().scale == 3.0 ? Size.Screen5_5Inch : Size.Screen4_7Inch
+                return UIScreen.main().scale == 3.0 ? Size.Screen5_5Inch : Size.Screen4_7Inch
             case 736:
                 return Size.Screen5_5Inch
             case 1024:
